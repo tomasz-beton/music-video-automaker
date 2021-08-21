@@ -96,5 +96,5 @@ if __name__ == '__main__':
 
         elif argv[1].endswith('.mp3') or argv[1].endswith('.wav'):
             visualise_beats(argv[1])
-    else:
-        print("Unknown ext")
+        else:
+            print("Unknown ext")
