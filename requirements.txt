@@ -1,0 +1,4 @@
+pydub
+librosa
+simpleaudio
+ffmpeg-python
