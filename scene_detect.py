@@ -1,11 +1,12 @@
 import ffmpeg
 import re
 
-def get_scene_info(filename):
+def get_scene_info(filename, sensitivity):
+    """Returns timestamps of cuts"""
     _, info = (
         ffmpeg
         .input(filename)
-        .filter('select', 'gt(scene, 0.4)')
+        .filter('select', f'gt(scene, {sensitivity})')
         .filter('showinfo')
         .output('pipe:', format='null')
         .run(capture_stderr=True, quiet=True)
@@ -17,8 +18,10 @@ def get_scene_info(filename):
 
     return info
 
-def split_scene(filename, out_dir):
-    info = get_scene_info(filename)
+def split_scene(filename, out_dir, sensitivity=0.4):
+    """Splits video file on detected cuts, saves in separate files"""
+
+    info = get_scene_info(filename, sensitivity)
     for i in range(len(info) - 1):
         start = info[i]
         end = info[i + 1]
@@ -31,4 +34,5 @@ def split_scene(filename, out_dir):
             .run()
         )
 
-split_scene('./test-data/short.mp4', './test-data/split/short')
+if __name__ == '__main__':
+    split_scene('./cats.mp4', './split/')
