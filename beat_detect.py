@@ -32,9 +32,9 @@ def read_any(filename):
     elif filename.endswith('.wav'):
         return read_wav(filename)
     else:
-        print("nieznany format")
-        # exception
-        return (None, None)
+        print("Unknown file extension")
+        # exception or sth
+        return 
     
 def mp3_to_wav(src, dst=None):
     """Exports mp3 file to wav"""
@@ -47,9 +47,10 @@ def get_beat_times(filename=None, y=None, sr=None):
     if filename is not None:
         y, sr = read_any(filename)
     if y is not None and sr is not None:
-        pass # czyli już git jest
+        pass # y, sr already loaded
     else:
-        print("zle podano cos")
+        print("Something wrong with the arguments")
+        return
     tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
     beat_times = librosa.frames_to_time(beat_frames, sr=sr)
 

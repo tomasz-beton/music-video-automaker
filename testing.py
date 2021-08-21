@@ -7,12 +7,12 @@ import simpleaudio as sa
 from time import sleep, time
 from sys import argv
 
-def visualise_cuts(filename, sensitivity):
+def visualise_cuts(filename, threshold):
     """Prints markers on video cuts"""
 
     print("Visualising cuts")
     print("getting cut times... ", end="")
-    cut_times = get_scene_info(filename, sensitivity)
+    cut_times = get_scene_info(filename, threshold)
     print(f"done, n={len(cut_times)-1}")
 
     print("Playing video (press q to stop)")
@@ -21,7 +21,10 @@ def visualise_cuts(filename, sensitivity):
         print("Error opening video file")
         return
 
+    width  = int(cap.get( cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get( cv2.CAP_PROP_FRAME_HEIGHT))
     delay = 1/cap.get( cv2.CAP_PROP_FPS )
+
     frame_n= 1
     start_t=time()
     i=1
@@ -31,13 +34,16 @@ def visualise_cuts(filename, sensitivity):
         if cv2.waitKey(1) & 0xFF == ord('q') or ret==False:
             break
 
-        cv2.imshow('Video', frame)
-
         t = time() - start_t
         if i<len(cut_times) and cut_times[i]<t:
             print(f"CUT #{i}", '-'*(1+i%3))
+            frame = cv2.rectangle(frame, (50, 50), (width-50, height-50), (0,0,255), 15)
+            frame = cv2.rectangle(frame, (50, 50), (width-50, height-50), (255,255,0), 3)
             i+=1
 
+        cv2.imshow('Video', frame)
+
+        t = time() - start_t
         sleep( max(frame_n*delay-t, 0) )
         frame_n+=1
         
@@ -89,7 +95,7 @@ def visualise_beats(filename, playtime=15):
 
 if __name__ == '__main__':
     if len(argv) < 2:
-        print("Usage: 'python testing.py <filename> [other params]")
+        print("Usage: 'python testing.py <filename> [other params like threshold]")
     else:
         if argv[1].endswith('.mp4') or argv[1].endswith('.avi'):
             visualise_cuts(argv[1], argv[2] if len(argv)>2 else 0.4)
@@ -97,4 +103,4 @@ if __name__ == '__main__':
         elif argv[1].endswith('.mp3') or argv[1].endswith('.wav'):
             visualise_beats(argv[1])
         else:
-            print("Unknown ext")
+            print("Unknown file extension")
