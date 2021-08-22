@@ -1,4 +1,4 @@
-from beat_detect import get_beat_times, read_any
+from beat_detect import get_beat_times, read_any, get_beat_times_plp
 from scene_detect import get_scene_info
 
 import cv2
@@ -59,7 +59,7 @@ def play_audio(filename=None, y=None, sr=None):
         y = y * (2**15 - 1) / np.max(np.abs(y))
         return sa.WaveObject(y.astype(np.int16), 1, 2, sr).play()
 
-def visualise_beats(filename, playtime=15):
+def visualise_beats(filename, plp):
     """Prints beat markers on beat"""
 
     print("Visualising beats")
@@ -68,7 +68,12 @@ def visualise_beats(filename, playtime=15):
     print(f"done, sr={sr}")
     
     print("getting beat times... ", end="")
-    beat_times, tempo = get_beat_times(y=y, sr=sr)
+    if plp=='plp':
+        beat_times, tempo = get_beat_times_plp(y=y, sr=sr)
+    elif plp:
+        beat_times, tempo = get_beat_times_plp(y=y, sr=sr, lognorm_val=int(plp))
+    else:
+        beat_times, tempo = get_beat_times(y=y, sr=sr)
     print(f"done, tempo={tempo}")
     
     print('playing... (Ctrl+C to stop)')
@@ -101,6 +106,6 @@ if __name__ == '__main__':
             visualise_cuts(argv[1], argv[2] if len(argv)>2 else 0.4)
 
         elif argv[1].endswith('.mp3') or argv[1].endswith('.wav'):
-            visualise_beats(argv[1])
+            visualise_beats(argv[1], argv[2] if len(argv)>2 else None)
         else:
             print("Unknown file extension")

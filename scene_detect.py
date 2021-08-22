@@ -11,6 +11,7 @@ def get_scene_info(filename, threshold):
         .output('pipe:', format='null')
         .run(capture_stderr=True, quiet=True)
     )
+    print(info)
 
     info = re.findall(r'pts_time:[0-9.]*', str(info))
     info = [float(x.split(':')[1]) for x in info]
@@ -36,4 +37,3 @@ def split_scene(filename, out_dir, threshold=0.4):
 
 if __name__ == '__main__':
     split_scene('./cats.mp4', './split/')
-    

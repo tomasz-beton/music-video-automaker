@@ -5,6 +5,8 @@ from sys import argv
 import numpy as np
 from time import sleep, time
 
+from scipy.stats import lognorm
+
 def read_mp3(filename):
     """MP3 to numpy array"""
     a = AudioSegment.from_mp3(filename)
@@ -51,7 +53,28 @@ def get_beat_times(filename=None, y=None, sr=None):
     else:
         print("Something wrong with the arguments")
         return
-    tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
-    beat_times = librosa.frames_to_time(beat_frames, sr=sr)
+    tempo, beat_times = librosa.beat.beat_track(y=y, sr=sr, units='time')
 
     return beat_times, tempo
+
+
+def get_beat_times_plp(filename=None, y=None, sr=None, lognorm_val=None):
+    """Detects beat times from filename or np.arrray using different method"""
+    if filename is not None:
+        y, sr = read_any(filename)
+    if y is not None and sr is not None:
+        pass # y, sr already loaded
+    else:
+        print("Something wrong with the arguments")
+        return
+
+    onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+    if lognorm:
+        prior = lognorm(loc=np.log(lognorm_val), scale=lognorm_val, s=1)
+        pulse = librosa.beat.plp(onset_envelope=onset_env, sr=sr, prior=prior)
+    else:
+        pulse = librosa.beat.plp(onset_envelope=onset_env, sr=sr)
+    beats_plp = np.flatnonzero(librosa.util.localmax(pulse))
+    beat_times = librosa.frames_to_time(beats_plp, sr=sr)
+
+    return beat_times, None
