@@ -74,7 +74,7 @@ def visualise_beats(filename, plp):
         beat_times, tempo = get_beat_times_plp(y=y, sr=sr, lognorm_val=int(plp))
     else:
         beat_times, tempo = get_beat_times(y=y, sr=sr)
-    print(f"done, tempo={tempo}")
+    print(f"done, tempo={np.around(tempo, 3)}, first beat at {np.around(beat_times[0], 2)}")
     
     print('playing... (Ctrl+C to stop)')
     play_obj = play_audio(y=y, sr=sr)
