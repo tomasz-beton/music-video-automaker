@@ -1,39 +1,51 @@
-import ffmpeg
-import re
+from scenedetect import VideoManager
+from scenedetect import SceneManager
+from scenedetect.detectors import AdaptiveDetector
 
-def get_scene_info(filename, threshold):
-    """Returns timestamps of cuts"""
-    _, info = (
-        ffmpeg
-        .input(filename)
-        .filter('select', f'gt(scene, {threshold})')
-        .filter('showinfo')
-        .output('pipe:', format='null')
-        .run(capture_stderr=True, quiet=True)
-    )
-    print(info)
+from scenedetect import video_splitter
 
-    info = re.findall(r'pts_time:[0-9.]*', str(info))
-    info = [float(x.split(':')[1]) for x in info]
-    info.insert(0, 0.0)
 
-    return info
+def get_scene_list(filename, adaptive_threshold=3.0, luma_only=False, 
+        min_scene_len=15, min_delta_hsv=15.0, window_width=2):
+    """Detects scenes in a file
 
-def split_scene(filename, out_dir, threshold=0.4):
+    Arguments:
+        filename (str): Path to video file
+        adaptive_threshold (float): Threshold for adaptive scene detection
+        luma_only (bool): If true, only luma values are used for scene detection
+        min_scene_len (int/FrameTimecode): Minimum length of scene in frames/seconds
+        min_delta_hsv (float): Minimum delta between scene frames in HSV color space
+        window_width (int): Width of rolling average window for scene detection
+
+    Returns:
+        list: List of scene start and end times in seconds
+    """
+
+    video_manager = VideoManager([filename])
+    scene_manager = SceneManager()
+
+    scene_manager.add_detector(AdaptiveDetector(video_manager, adaptive_threshold, luma_only, 
+        min_scene_len, min_delta_hsv, window_width))
+
+    video_manager.set_downscale_factor()
+    video_manager.start()
+
+    scene_manager.detect_scenes(frame_source=video_manager)
+
+    video_manager.release()
+
+    return scene_manager.get_scene_list()
+
+def split_scene(filename, out_dir):
     """Splits video file on detected cuts, saves in separate files"""
 
-    info = get_scene_info(filename, threshold)
-    for i in range(len(info) - 1):
-        start = info[i]
-        end = info[i + 1]
-        out_filename = '{}/{:06d}.mp4'.format(out_dir, i)
-        print('Splitting {} from {} to {}'.format(filename, start, end))
-        (
-            ffmpeg
-            .input(filename, ss=start, to=end)
-            .output(out_filename)
-            .run()
-        )
+    scene_list = get_scene_list(filename)
+    print(scene_list)
 
-if __name__ == '__main__':
-    split_scene('./cats.mp4', './split/')
+    filename_no_path = filename.split('/')[-1]
+    filename_no_ext = filename_no_path.split('.')[0]
+
+    if video_splitter.is_ffmpeg_available():
+        video_splitter.split_video_ffmpeg([filename], scene_list, f'{out_dir}$VIDEO_NAME-$SCENE_NUMBER.mp4', filename_no_ext)
+    else:
+        print('ffmpeg not available')

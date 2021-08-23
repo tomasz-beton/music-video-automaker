@@ -1,5 +1,5 @@
 from beat_detect import get_beat_times, read_any, get_beat_times_plp
-from scene_detect import get_scene_info
+from scene_detect import get_scene_list
 
 import cv2
 import numpy as np
@@ -12,7 +12,8 @@ def visualise_cuts(filename, threshold):
 
     print("Visualising cuts")
     print("getting cut times... ", end="")
-    cut_times = get_scene_info(filename, threshold)
+    scene_list = get_scene_list(filename, threshold)
+    cut_times = [scene[0].get_seconds() for scene in scene_list]
     print(f"done, n={len(cut_times)-1}")
 
     print("Playing video (press q to stop)")
@@ -40,6 +41,8 @@ def visualise_cuts(filename, threshold):
             frame = cv2.rectangle(frame, (50, 50), (width-50, height-50), (0,0,255), 15)
             frame = cv2.rectangle(frame, (50, 50), (width-50, height-50), (255,255,0), 3)
             i+=1
+
+        frame = cv2.putText(frame, f"{i-1}", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
 
         cv2.imshow('Video', frame)
 
@@ -103,7 +106,7 @@ if __name__ == '__main__':
         print("Usage: 'python testing.py <filename> [other params like threshold]")
     else:
         if argv[1].endswith('.mp4') or argv[1].endswith('.avi'):
-            visualise_cuts(argv[1], argv[2] if len(argv)>2 else 0.4)
+            visualise_cuts(argv[1], argv[2] if len(argv)>2 else 3.0)
 
         elif argv[1].endswith('.mp3') or argv[1].endswith('.wav'):
             visualise_beats(argv[1], argv[2] if len(argv)>2 else None)
