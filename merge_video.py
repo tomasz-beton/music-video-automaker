@@ -1,5 +1,4 @@
 import ffmpeg
-from scenedetect import FrameTimecode
 
 def merge_video(video_path, audio_path, output_path, cut_list):
     """ Merges a video with an audio file depending on the cut list
