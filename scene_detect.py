@@ -2,7 +2,9 @@ from scenedetect import VideoManager
 from scenedetect import SceneManager
 from scenedetect.detectors import AdaptiveDetector
 
-from scenedetect import video_splitter
+# For caching detection metrics and saving/loading to a stats file
+from scenedetect.stats_manager import StatsManager
+import os
 
 
 def get_scene_list(filename, adaptive_threshold=3.0, luma_only=False, 
@@ -22,30 +24,33 @@ def get_scene_list(filename, adaptive_threshold=3.0, luma_only=False,
     """
 
     video_manager = VideoManager([filename])
-    scene_manager = SceneManager()
+    stats_manager = StatsManager()
+    scene_manager = SceneManager(stats_manager)
 
     scene_manager.add_detector(AdaptiveDetector(video_manager, adaptive_threshold, luma_only, 
         min_scene_len, min_delta_hsv, window_width))
+    scene_list = []
 
-    video_manager.set_downscale_factor()
-    video_manager.start()
+    stats_path = f'{filename}.stats.csv'
 
-    scene_manager.detect_scenes(frame_source=video_manager)
+    try:
+        if os.path.exists(stats_path):
+            with open(stats_path, 'r') as stats_file:
+                stats_manager.load_from_csv(stats_file)
+        
+        video_manager.set_downscale_factor()
+        video_manager.start()
 
-    video_manager.release()
+        scene_manager.detect_scenes(frame_source=video_manager)
 
-    return scene_manager.get_scene_list()
+        scene_list = scene_manager.get_scene_list()
 
-def split_scene(filename, out_dir):
-    """Splits video file on detected cuts, saves in separate files"""
+        if stats_manager.is_save_required():
+            base_timecode = video_manager.get_base_timecode()
+            with open(stats_path, 'w') as stats_file:
+                stats_manager.save_to_csv(stats_file, base_timecode)
 
-    scene_list = get_scene_list(filename)
-    print(scene_list)
+    finally:
+        video_manager.release()
 
-    filename_no_path = filename.split('/')[-1]
-    filename_no_ext = filename_no_path.split('.')[0]
-
-    if video_splitter.is_ffmpeg_available():
-        video_splitter.split_video_ffmpeg([filename], scene_list, f'{out_dir}$VIDEO_NAME-$SCENE_NUMBER.mp4', filename_no_ext)
-    else:
-        print('ffmpeg not available')
+    return scene_list
