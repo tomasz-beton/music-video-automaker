@@ -2,4 +2,4 @@ pydub
 librosa
 simpleaudio
 scenedetect
-ffmpeg-python
+moviepy
