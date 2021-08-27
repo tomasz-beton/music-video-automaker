@@ -1,7 +1,6 @@
-from librosa.core import get_duration
-from beat_detect import get_beat_times
+from beat_detect import get_len, read_any, get_beat, get_energy
 from scene_detect import get_scene_list
-from merge_video import merge_video, get_cut_list
+from merge_video import merge_video, get_cut_list, get_cut_list2, fix_ts, get_fps
 
 import argparse
 
@@ -10,7 +9,7 @@ if __name__ == '__main__':
     parser.add_argument('video_path', help='video path (.mp4, .avi)')
     parser.add_argument('audio_path', help='audio path (.mp3, .wav)')
     parser.add_argument('-o', '--output-path', help='output path', default='./merged.mp4', metavar='PATH')
-    parser.add_argument('--method', choices=['delay', 'pseudochrono', 'random'], default='delay', help='clip arrangement method')
+    parser.add_argument('-m', '--method', choices=['delay', 'pseudochrono', 'random', '2'], default='delay', help='clip arrangement method')
 
     detector_options = parser.add_argument_group('adaptive scene detector')
     detector_options.add_argument('--threshold', help='threshold value that the calculated frame score must exceed to trigger a new scene', default=3.0, type=float, metavar='FLOAT')
@@ -28,14 +27,21 @@ if __name__ == '__main__':
     print('Getting scene list')
     scene_list = get_scene_list(video_path, args.threshold, args.luma_only, 
             args.min_scene_len, args.min_delta_hsv, args.window_width)
+    scene_cuts = [scene[0].get_seconds() for scene in scene_list]
     
     print('Getting beat times')
-    beat_times, tempo = get_beat_times(audio_path)
-    audio_length = get_duration(filename=audio_path)
-
-    scene_cuts = [scene[0].get_seconds() for scene in scene_list]
+    y, sr = read_any(audio_path)
+    tempo, first_beat = get_beat(y, sr)
+    audio_len = get_len(y, sr)
+ 
     print(f'Getting cut list ({args.method})')
-    cut_list = get_cut_list(scene_cuts, tempo, beat_times[0], audio_length, method=args.method)
+    if args.method == '2':
+        cut_list = get_cut_list2(scene_cuts, tempo, first_beat, audio_len)
+    else:
+        cut_list = get_cut_list(scene_cuts, tempo, first_beat, audio_len, method=args.method)
+
+    fps = get_fps(video_path)
+    cut_list = fix_ts(cut_list, fps)
 
     print('Merging')
     merge_video(video_path, audio_path, output_path, cut_list)

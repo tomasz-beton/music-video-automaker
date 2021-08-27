@@ -37,52 +37,58 @@ def read_any(filename):
         print("Unknown file extension")
         # exception or sth
         return 
-    
-def mp3_to_wav(src, dst=None):
-    """Exports mp3 file to wav"""
-    dst = dst or src.replace('.mp3', '.wav')
-    audio = AudioSegment.from_mp3(src)
-    audio.export(dst, format="wav")
 
-def get_beat_times(filename=None, y=None, sr=None):
-    """Detects beat times from filename or np.arrray"""
-    if filename is not None:
-        y, sr = read_any(filename)
-    if y is not None and sr is not None:
-        pass # y, sr already loaded
-    else:
-        print("Something wrong with the arguments")
-        return
+def get_beat(y, sr, full=False):
+    """
+    Info bout beat.
 
+    Args:
+        y (np.array): audio
+        sr (int): sampling rate
+        full (bool): If true, returns full beat times instead of first beat
+
+    Returns:
+        tempo (float)
+        first_beat (float) (or beat_times (np.array))
+    """
     onset_env = librosa.onset.onset_strength(y, sr=sr)
     prior = uniform(30, 300)  # uniform over 30-300 BPM
     utempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr, prior=prior)[0]
 
     _, beat_times = librosa.beat.beat_track(y=y, sr=sr, units='time', bpm=utempo)
+`
+    return utempo, beat_times[0] if not full else beat_times
 
-    return beat_times, utempo
+def get_audio_len(y, sr):
+    """Returns audio length"""
+    return librosa.get_duration(y=y, sr=sr)
 
-
-def get_beat_times_plp(filename=None, y=None, sr=None, lognorm_val=None):
-    """
-    Detects beat times from filename or np.arrray using different method
-    Doesnt work very well :o
+def get_energy(y, sr, window=None):
         """
-    if filename is not None:
-        y, sr = read_any(filename)
-    if y is not None and sr is not None:
-        pass # y, sr already loaded
-    else:
-        print("Something wrong with the arguments")
-        return
+    Energy of the song.
 
-    onset_env = librosa.onset.onset_strength(y=y, sr=sr)
-    if lognorm:
-        prior = lognorm(loc=np.log(lognorm_val), scale=lognorm_val, s=1)
-        pulse = librosa.beat.plp(onset_envelope=onset_env, sr=sr, prior=prior)
-    else:
-        pulse = librosa.beat.plp(onset_envelope=onset_env, sr=sr)
-    beats_plp = np.flatnonzero(librosa.util.localmax(pulse))
-    beat_times = librosa.frames_to_time(beats_plp, sr=sr)
+    Args:
+        y (np.array): audio
+        sr (int): sampling rate
+        window (float):  length of window for a moving average, 
+            best if multiple of a bar length (2 bars by default)
 
-    return beat_times, None
+    Returns:
+        energy (np.array): array with values 0,1,2 describing energy level,
+            len of array equal to len of audio in full seconds
+    """
+
+    onset_env = librosa.onset.onset_strength(y, sr=sr)
+    times = librosa.times_like(onset_env)
+    rate = 1/times[1]
+
+    window = int(window*rate) if window else int(4*60/get_beat(y, sr)[0]*rate)
+
+    onset_env = np.convolve(onset_env, np.ones(window), 'same') / window
+    energy = np.array([onset_env[times==i].mean() for i in range(int(get_audio_len(y, sr))+1)])
+
+    # scaling energy: 0, 1, 2 - 0 being the fastest
+    # this need more work
+    energy = np.trunc( 3 - 2.9*energy/np.max(energy) )
+
+    return energy

@@ -22,6 +22,61 @@ def merge_video(video_path, audio_path, output_path, cut_list):
 
     video.write_videofile(output_path)
 
+def get_cut_list2(cut_times, tempo, first_beat, audio_len, energy=None):
+    """
+    Makes cut list using simple, but effective method. Assumes constant tempo.
+
+    Args:
+        cut_times (list): List of cuts in a original video
+        tempo (float): Tempo of the song
+        first_beat (float): Time of first beat
+        audio_len (float): Length of an audio file
+
+    Returns:
+        cut_list (list of (float, float)) : List of cuts to be glued into a video
+    """
+    bar = 4*60/tempo # bar in this case lasts four beats
+
+    scenes = [(cut_times[i], cut_times[i+1]) for i in range(len(cut_times)-1)]
+    bars_per_scene = [(scene[1] - scenes[0])//bar for scene in scenes] 
+    used_bars = [0]*len(scenes)
+
+    cut_list = []
+    total_len = 0
+
+    # initial, before beat starts
+    cut_list.append( (0, first_beat) ) 
+    total_len += first_beat
+    i = 0
+    while cut_times[i] < first_beat:
+        i+=1
+
+    if energy is None:
+        energy = [0]*(audio_len+5)
+
+    # i - najwczesniejsza niewykorzystana scena
+    # j - aktualnie rozpatrywana scena
+    last_used_scene = None
+    while total_len<audio_len:
+        while i<len(scenes) and bars_per_scene[i] == used_bars[i]:
+            i+=1
+
+        j = i
+        needed_bars = 2**energy[int(total_len)]
+
+        while j != last_used_scene and j<len(scenes) and bars_per_scene[j]-used_bars[j]>=needed_bars:
+            j+=1
+
+        if j == len(scenes):
+            break
+
+        start = scenes[j][0] + used_bars[j]*bar
+        cut_list.append( (start, start+needed_bars*bar) )
+        total_len += needed_bars*bar
+        used_bars[j] +=needed_bars
+        last_used_scene = j
+
+    return cut_list
 
 def get_cut_list(cut_times, tempo, first_beat, audio_len, method='delay'):
     """
@@ -52,7 +107,7 @@ def get_cut_list(cut_times, tempo, first_beat, audio_len, method='delay'):
     # cutting up everything into bar length cuts
     all_cuts = []
     if method == 'delay':
-        delay = 1
+        delay=1
         while i<len(cut_times)-1:
             cut = cut_times[i], cut_times[i+1]
             all_cuts += [ (cut[0]+n*(bar+delay), cut[0]+n*(bar+delay) + bar) for n in range( int((cut[1]-cut[0])/(bar+delay)) )]
@@ -81,7 +136,7 @@ def get_cut_list(cut_times, tempo, first_beat, audio_len, method='delay'):
     return cut_list
 
 def fix_ts(cut_list, fps):
-    """Converts cut_list from float timestamps to frame numbers assuming constant fps"""
+    """Fixes timestamps not allowing to desynchronise"""
     fixed_cut_list = []
 
     time_sum = 0
@@ -93,3 +148,6 @@ def fix_ts(cut_list, fps):
         fixed_cut_list.append( (a/fps, b/fps) )
 
     return fixed_cut_list
+
+def get_fps(filepath):
+    return VideoFileClip(filepath).subclip(0, 10).fps 
