@@ -64,10 +64,10 @@ def get_cut_list2(cut_times, tempo, first_beat, audio_len, energy=None):
         j = i
         needed_bars = 2**energy[int(total_len)]
 
-        while j != last_used_scene and j<len(scenes) and bars_per_scene[j]-used_bars[j]>=needed_bars:
+        while (j<len(scenes) and bars_per_scene[j]-used_bars[j]<needed_bars) or last_used_scene==j:
             j+=1
 
-        if j == len(scenes):
+        if j >= len(scenes):
             break
 
         start = scenes[j][0] + used_bars[j]*bar
