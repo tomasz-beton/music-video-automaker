@@ -38,7 +38,7 @@ def get_cut_list2(cut_times, tempo, first_beat, audio_len, energy=None):
     bar = 4*60/tempo # bar in this case lasts four beats
 
     scenes = [(cut_times[i], cut_times[i+1]) for i in range(len(cut_times)-1)]
-    bars_per_scene = [(scene[1] - scenes[0])//bar for scene in scenes] 
+    bars_per_scene = [(scene[1] - scene[0])//bar for scene in scenes] 
     used_bars = [0]*len(scenes)
 
     cut_list = []
@@ -52,7 +52,7 @@ def get_cut_list2(cut_times, tempo, first_beat, audio_len, energy=None):
         i+=1
 
     if energy is None:
-        energy = [0]*(audio_len+5)
+        energy = [0]*int(audio_len+5)
 
     # i - najwczesniejsza niewykorzystana scena
     # j - aktualnie rozpatrywana scena

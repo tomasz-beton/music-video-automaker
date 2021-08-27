@@ -1,4 +1,4 @@
-from beat_detect import get_len, read_any, get_beat, get_energy
+from beat_detect import get_audio_len, read_any, get_beat, get_energy
 from scene_detect import get_scene_list
 from merge_video import merge_video, get_cut_list, get_cut_list2, fix_ts, get_fps
 
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     print('Getting beat times')
     y, sr = read_any(audio_path)
     tempo, first_beat = get_beat(y, sr)
-    audio_len = get_len(y, sr)
+    audio_len = get_audio_len(y, sr)
  
     print(f'Getting cut list ({args.method})')
     if args.method == '2':

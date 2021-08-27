@@ -56,7 +56,6 @@ def get_beat(y, sr, full=False):
     utempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr, prior=prior)[0]
 
     _, beat_times = librosa.beat.beat_track(y=y, sr=sr, units='time', bpm=utempo)
-`
     return utempo, beat_times[0] if not full else beat_times
 
 def get_audio_len(y, sr):
@@ -64,7 +63,7 @@ def get_audio_len(y, sr):
     return librosa.get_duration(y=y, sr=sr)
 
 def get_energy(y, sr, window=None):
-        """
+    """
     Energy of the song.
 
     Args:
@@ -77,7 +76,7 @@ def get_energy(y, sr, window=None):
         energy (np.array): array with values 0,1,2 describing energy level,
             len of array equal to len of audio in full seconds
     """
-
+    
     onset_env = librosa.onset.onset_strength(y, sr=sr)
     times = librosa.times_like(onset_env)
     rate = 1/times[1]
