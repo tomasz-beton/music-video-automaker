@@ -6,12 +6,12 @@ That was our general idea. If we detect cuts in provided video, detect beat in a
 
 #### Usage: 
 `
-python merge_testing <video_path> <audio_path> [options]
+python merge_testing.py <video_path> <audio_path> [options]
 `
 
 You can specify output file path using `-o <out_path>` and other options which you better look up yourself in the code.
 
 example: &nbsp;
 `
-python merge_testing "src/penguins.mp4" "src/blinding_lights.mp3" -o "out/merged.mp4" --threshold 2
+python merge_testing.py "src/penguins.mp4" "src/blinding_lights.mp3" -o "out/merged.mp4" --threshold 2
 `
