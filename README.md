@@ -13,5 +13,5 @@ You can specify output file path using `-o <out_path>` and other options which y
 
 example: 
 `
-python merge_testing.py "src/penguins.mp4" "src/blinding_lights.mp3" -o "out/merged.mp4" --threshold 2
+python merge_testing.py "src/penguins.mp4" "src/wolves.mp3" -o "out/merged.mp4" --threshold 2
 `
