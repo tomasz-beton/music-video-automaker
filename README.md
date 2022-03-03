@@ -1,3 +1,7 @@
+<p>
+  <img src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54">
+</p>
+
 # Music video automaker
 Have you ever watched muted commercials with music playing in the background? Well, maybe not. 
 Anyways I can assure you it sound/looks very cool when cuts in the video synchronize with the beat.
