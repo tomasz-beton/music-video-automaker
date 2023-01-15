@@ -1,14 +1,15 @@
-from scenedetect import VideoManager
-from scenedetect import SceneManager
-from scenedetect.detectors import AdaptiveDetector
-
-# For caching detection metrics and saving/loading to a stats file
-from scenedetect.stats_manager import StatsManager
 import os
 
+from scenedetect import SceneManager
+from scenedetect import VideoManager
+from scenedetect.detectors import AdaptiveDetector
+# For caching detection metrics and saving/loading to a stats file
+from scenedetect.stats_manager import StatsManager
 
-def get_scene_list(filename, adaptive_threshold=3.0, luma_only=False, 
-        min_scene_len=15, min_delta_hsv=15.0, window_width=2):
+
+def get_scene_list(
+        filename, adaptive_threshold=3.0, luma_only=False, min_scene_len=15, min_delta_hsv=15.0, window_width=2
+):
     """Detects scenes in a file
 
     Arguments:
@@ -27,17 +28,17 @@ def get_scene_list(filename, adaptive_threshold=3.0, luma_only=False,
     stats_manager = StatsManager()
     scene_manager = SceneManager(stats_manager)
 
-    scene_manager.add_detector(AdaptiveDetector(video_manager, adaptive_threshold, luma_only, 
-        min_scene_len, min_delta_hsv, window_width))
-    scene_list = []
+    scene_manager.add_detector(
+        AdaptiveDetector(video_manager, adaptive_threshold, luma_only, min_scene_len, min_delta_hsv, window_width)
+    )
 
-    stats_path = f'{filename}.stats.csv'
+    stats_path = f"{filename}.stats.csv"
 
     try:
         if os.path.exists(stats_path):
-            with open(stats_path, 'r') as stats_file:
+            with open(stats_path, "r") as stats_file:
                 stats_manager.load_from_csv(stats_file)
-        
+
         video_manager.set_downscale_factor()
         video_manager.start()
 
@@ -47,7 +48,7 @@ def get_scene_list(filename, adaptive_threshold=3.0, luma_only=False,
 
         if stats_manager.is_save_required():
             base_timecode = video_manager.get_base_timecode()
-            with open(stats_path, 'w') as stats_file:
+            with open(stats_path, "w") as stats_file:
                 stats_manager.save_to_csv(stats_file, base_timecode)
 
     finally:
