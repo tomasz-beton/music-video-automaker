@@ -1,28 +1,18 @@
+from dataclasses import dataclass
 from random import shuffle
+from typing import List, Tuple
 
-from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
+from src.audio_analysis import AudioFeatures
+from src.video_analysis import VideoFeatures
 
 
-def merge_video(video_path, audio_path, output_path, cut_list):
-    """Merges a video with an audio file depending on the cut list
+@dataclass
+class MusicVideoScript:
+    """Script for music video"""
 
-    Args:
-        video_path (str): Path to video file
-        audio_path (str): Path to audio file
-        output_path (str): Path to output file
-        cut_list (list): List of tuples (start, end)
-
-    Returns:
-        None
-    """
-    video = VideoFileClip(video_path)
-    audio = AudioFileClip(audio_path)
-
-    clips = [video.subclip(start, end) for start, end in cut_list]
-    video = concatenate_videoclips(clips)
-    video = video.set_audio(audio)
-
-    video.write_videofile(output_path)
+    cut_list: List[Tuple[float, float]]
+    audio_path: str
+    video_path: str
 
 
 def get_cut_list(cut_times, tempo, first_beat, audio_len, method="delay"):
@@ -99,3 +89,20 @@ def fix_ts(cut_list, fps):
         fixed_cut_list.append((a / fps, b / fps))
 
     return fixed_cut_list
+
+
+def generate_script(video_features: List[VideoFeatures], audio_features: AudioFeatures, method="delay"):
+    """Generates script for music video"""
+    cut_list = get_cut_list(
+        cut_times=video_features[0].cut_times,
+        tempo=audio_features.tempo,
+        first_beat=audio_features.first_beat,
+        audio_len=audio_features.length,
+        method=method,
+    )
+
+    return MusicVideoScript(
+        cut_list,
+        audio_path="audio.mp3",
+        video_path="video.mp4",
+    )

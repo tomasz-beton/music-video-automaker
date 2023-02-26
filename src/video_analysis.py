@@ -1,14 +1,25 @@
 import os
+from dataclasses import dataclass
 
 from scenedetect import SceneManager
 from scenedetect import VideoManager
 from scenedetect.detectors import AdaptiveDetector
+
 # For caching detection metrics and saving/loading to a stats file
 from scenedetect.stats_manager import StatsManager
 
+from src.media_manager import MediaFile
+
+
+@dataclass
+class VideoFeatures:
+    video_id: str
+    scene_list: list = None
+    cut_times: list = None
+
 
 def get_scene_list(
-        filename, adaptive_threshold=3.0, luma_only=False, min_scene_len=15, min_delta_hsv=15.0, window_width=2
+    filename, adaptive_threshold=3.0, luma_only=False, min_scene_len=15, min_delta_hsv=15.0, window_width=2
 ):
     """Detects scenes in a file
 
@@ -55,3 +66,10 @@ def get_scene_list(
         video_manager.release()
 
     return scene_list
+
+
+def get_video_features(video: MediaFile):
+    scene_list = get_scene_list(video.path)
+
+    cut_times = [scene[0].get_seconds() for scene in scene_list]
+    return VideoFeatures(video_id=video.id, scene_list=scene_list, cut_times=cut_times)

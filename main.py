@@ -2,9 +2,9 @@ import argparse
 
 from librosa.core import get_duration
 
-from beat_detect import get_beat_times
-from merge_video import merge_video, get_cut_list
-from scene_detect import get_scene_list
+from src.audio_analysis import get_beat_times
+from src.generating_script import merge_video, get_cut_list
+from src.video_analysis import get_scene_list
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
